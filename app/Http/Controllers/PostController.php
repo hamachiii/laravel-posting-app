@@ -13,7 +13,7 @@ class PostController extends Controller
     // 一覧ページ
     public function index()
     {
-        $posts = Auth::user()->posts()->orderBy('created_at', 'desc')->get();
+        $posts = Auth::user()->posts()->orderBy('updated_at', 'desc')->get();
 
         return view('posts.index', compact('posts'));
     }
@@ -38,6 +38,12 @@ class PostController extends Controller
         $post->content = $request->input('content');
         $post->user_id = Auth::id();
         $post->save();
+        // バリデーションを設定する
+        $request->validate([
+            'title' => 'required|max:40',
+            'conetent' => 'required|max:200'
+        ]);
+
 
         return redirect()->route('posts.index')->with('flash_message', '投稿が完了しました。');
     }
@@ -63,6 +69,17 @@ class PostController extends Controller
         $post->content = $request->input('content');
         $post->save();
 
-        return redirect()->route('posts.sohw', $post)->with('flash_message', '投稿を編集しました。');
+        return redirect()->route('posts.show',$post)->with('flash_message', '投稿を編集しました。');
+    }
+
+    // 削除機能
+public function destroy(Post $post) {
+    if ($post->user_id !== Auth::id()) {
+        return redirect()->route('posts.index')->with('error_message', '不正なアクセスです。');
+    }
+
+    $post->delete();
+
+    return redirect()->route('posts.index')->with('flash_message', '投稿を削除しました。');
     }
 }
